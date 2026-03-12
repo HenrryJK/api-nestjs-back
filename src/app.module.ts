@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { MarcaModule } from './marca/marca.module';
+import { ColorsModule } from './colors/colors.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MarcaModule } from './marca/marca.module';
     UsersModule,
     AuthModule,
     MarcaModule,
+    ColorsModule,
   ],
   controllers: [],
   providers: [],

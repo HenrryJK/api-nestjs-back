@@ -13,4 +13,8 @@ export class CreateProductDto {
     @IsOptional()
     id_marca?: number;
 
+    @IsInt()
+    @IsOptional()
+    id_color?: number;
+
 }

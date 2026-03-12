@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
 import { Marca } from 'src/marca/entities/marca.entity';
+import { Color } from 'src/colors/entities/color.entity';
 
 @Injectable()
 export class ProductsService {
@@ -13,16 +14,25 @@ export class ProductsService {
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Marca)
-    private readonly marcaRepository: Repository<Marca>, // Para validar existencia
+    private readonly marcaRepository: Repository<Marca>,
+    @InjectRepository(Color)
+    private readonly colorRepository: Repository<Color>,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
-    // const product =this.productRepository.create(createProductDto);
-    // return await this.productRepository.save(product);
+    // Nota de henry: Validar marca si se envía
     if (createProductDto.id_marca) {
       const marca = await this.marcaRepository.findOneBy({ id_marca: createProductDto.id_marca });
       if (!marca) {
-        throw new NotFoundException(`La marca para este producto ${createProductDto.id_marca} no existe`);
+        throw new NotFoundException(`La marca ${createProductDto.id_marca} no existe`);
+      }
+    }
+
+    // Nota de henry: Validar color si se envía
+    if (createProductDto.id_color) {
+      const color = await this.colorRepository.findOneBy({ id_color: createProductDto.id_color });
+      if (!color) {
+        throw new NotFoundException(`El color ${createProductDto.id_color} no existe`);
       }
     }
 
@@ -31,76 +41,96 @@ export class ProductsService {
   }
 
   async findAll() {
-    // return this.productRepository.find();
-        // Cargamos la relación con la marca
     const products = await this.productRepository.find({
-      relations: ['marcaRel'],
+      relations: ['marcaRel', 'colorRel'], // Nota de henrry: Cargamos ambas relaciones
     });
 
-    // Mapeamos para obtener el formato deseado: { id_producto, nombre_producto, precio_venta, id_marca, marca, deletedAt }
     return products.map(product => ({
       id_producto: product.id_producto,
       nombre_producto: product.nombre_producto,
       precio_venta: product.precio_venta,
       id_marca: product.marcaRel?.id_marca ?? null,
       marca: product.marcaRel?.nombre_marca ?? null,
+      id_color: product.colorRel?.id_color ?? null,
+      nombre_color: product.colorRel?.nombre_color ?? null,
       deletedAt: product.deletedAt,
     }));
   }
 
   async findOne(id: number) {
-    // return await this.productRepository.findOneBy({ id_producto: id });
     const product = await this.productRepository.findOne({
-        where: { id_producto: id },
-        relations: ['marcaRel'],
-      });
-      if (!product) {
-        throw new NotFoundException(`Producto con este id ${id} no encontrado`);
-      }
+      where: { id_producto: id },
+      relations: ['marcaRel', 'colorRel'],
+    });
 
-      return {
-        id_producto: product.id_producto,
-        nombre_producto: product.nombre_producto,
-        precio_venta: product.precio_venta,
-        id_marca: product.marcaRel?.id_marca ?? null,
-        marca: product.marcaRel?.nombre_marca ?? null,
-        deletedAt: product.deletedAt,
-      };
+    if (!product) {
+      throw new NotFoundException(`Producto con id ${id} no encontrado`);
+    }
+
+    return {
+      id_producto: product.id_producto,
+      nombre_producto: product.nombre_producto,
+      precio_venta: product.precio_venta,
+      id_marca: product.marcaRel?.id_marca ?? null,
+      marca: product.marcaRel?.nombre_marca ?? null,
+      id_color: product.colorRel?.id_color ?? null,
+      nombre_color: product.colorRel?.nombre_color ?? null,
+      deletedAt: product.deletedAt,
+    };
   }
 
   async update(id: number, updateProductDto: UpdateProductDto) {
-      // Buscar el producto existente
-      const product = await this.productRepository.findOne({
-        where: { id_producto: id },
-        relations: ['marcaRel'],
-      });
-      if (!product) {
-        throw new NotFoundException(`Product with id ${id} not found`);
-      }
+    const product = await this.productRepository.findOne({
+      where: { id_producto: id },
+      relations: ['marcaRel', 'colorRel'],
+    });
 
-      // Si se actualiza id_marca, verificar que la nueva marca exista
-      if (updateProductDto.id_marca !== undefined) {
+    if (!product) {
+      throw new NotFoundException(`Producto con id ${id} no encontrado`);
+    }
+
+    // nota de henry:  marca si se actualiza
+    if (updateProductDto.id_marca !== undefined) {
+      if (updateProductDto.id_marca === null) {
+        product.id_marca = null;
+      } else {
         const marca = await this.marcaRepository.findOneBy({ id_marca: updateProductDto.id_marca });
         if (!marca) {
-          throw new NotFoundException(`Marca with id ${updateProductDto.id_marca} not found`);
+          throw new NotFoundException(`Marca con id ${updateProductDto.id_marca} no existe`);
         }
+        product.id_marca = updateProductDto.id_marca;
       }
+    }
+    if (updateProductDto.id_color !== undefined) {
+      if (updateProductDto.id_color === null) {
+        product.id_color = null;
+      } else {
+        const color = await this.colorRepository.findOneBy({ id_color: updateProductDto.id_color });
+        if (!color) {
+          throw new NotFoundException(`Color con id ${updateProductDto.id_color} no existe`);
+        }
+        product.id_color = updateProductDto.id_color;
+      }
+    }
 
-      // Actualizar propiedades
-      Object.assign(product, updateProductDto);
-      await this.productRepository.save(product);
+    if (updateProductDto.nombre_producto !== undefined) {
+      product.nombre_producto = updateProductDto.nombre_producto;
+    }
+    if (updateProductDto.precio_venta !== undefined) {
+      product.precio_venta = updateProductDto.precio_venta;
+    }
 
-      // Retornar el producto actualizado en el mismo formato
-      return this.findOne(id);
+    await this.productRepository.save(product);
+
+    return this.findOne(id);
   }
 
   async remove(id: number) {
-        const result = await this.productRepository.delete(id);
+    // Nota d henrry: Usamos delete para eliminar el producto fisicamente y bueno ya no logica.
+    const result = await this.productRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Product with id ${id} not found`);
+      throw new NotFoundException(`Producto con id ${id} no encontrado`);
     }
-    return { message: 'Product deleted successfully' };
-    // return await this.productRepository.softDelete({ id_producto: id }); // se le pasa el id entiendo
-    // return await this.productRepository.softRemove({ id_producto: id }); // se le pasa la instancia del registro
+    return { message: 'Producto eliminado exitosamente' };
   }
 }
