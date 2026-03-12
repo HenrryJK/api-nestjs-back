@@ -28,8 +28,8 @@ export class ProductsService {
     return await this.productRepository.findOneBy({ id_producto: id });
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto) {
-    return await this.productRepository.update({ id_producto: id }, updateProductDto);
+  update(id: number, updateProductDto: UpdateProductDto) {
+    return `This action updates a #${id} product`;
   }
 
   async remove(id: number) {
