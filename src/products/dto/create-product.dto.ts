@@ -1,4 +1,4 @@
-import { IsInt, IsString } from "class-validator";
+import { IsInt, IsOptional, IsString } from "class-validator";
 
 export class CreateProductDto {
     @IsString()
@@ -8,5 +8,9 @@ export class CreateProductDto {
     // @Ispositive()
     @IsString()
     precio_venta: number;
+
+    @IsInt()
+    @IsOptional()
+    id_marca?: number;
 
 }

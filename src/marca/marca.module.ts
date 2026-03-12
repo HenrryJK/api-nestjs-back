@@ -8,5 +8,8 @@ import { Marca } from './entities/marca.entity';
   controllers: [MarcaController],
   providers: [MarcaService],
   imports: [TypeOrmModule.forFeature([Marca])],
+  // nota d henrry:Esto es correcto  exportar el modulo para
+  // que pueda ser utilizado en otros modulos como el de productos aclaro esto.
+  exports: [TypeOrmModule],
 })
 export class MarcaModule {}

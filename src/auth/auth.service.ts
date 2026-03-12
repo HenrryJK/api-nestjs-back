@@ -17,14 +17,26 @@ export class AuthService {
         if (user) {
             throw new BadRequestException('User already exists');
         }
-        
-        return await this.userService.create({
+        // return await this.userService.create({
+        //     name, 
+        //     email, 
+        //     // nota d henrry: aqui se encripte la contraseña antes de guardarla en la base de datos
+        //     // con libreria bcryptjs 
+        //     password: await bcrypt.hash(password, 10)
+        // });
+        await this.userService.create({
             name, 
             email, 
             // nota d henrry: aqui se encripte la contraseña antes de guardarla en la base de datos
             // con libreria bcryptjs 
             password: await bcrypt.hash(password, 10)
         });
+
+        return {
+            message: 'User registered successfully',
+            name,
+            email
+        }
     }
 
     async login({email, password}: LoginDto) {
@@ -37,7 +49,7 @@ export class AuthService {
             throw new UnauthorizedException('Password is wrong...!');
         }
 
-        const payload = { email: user.email };
+        const payload = { email: user.email, role: user.role };
         const token = await this.jwtService.signAsync(payload);
 
         return {
@@ -48,6 +60,15 @@ export class AuthService {
             //     email: user.email,
             // }, 
         };
+    }
+
+    async profile({email, role}: {email: string; role: string}) {
+        // if (role !== 'admin') {
+        //     throw new UnauthorizedException(
+        //         'No estas autorizado para ver esta información...'
+        //     );
+        // }
+        return await this.userService.findOneByEmail(email);
     }
 
 }
