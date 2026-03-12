@@ -6,16 +6,10 @@ import { AuthGuard } from './guard/auth.guard';
 import { Request } from 'express';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guard/roles.guard';
-import { Role } from './enum/rol.enum';
+import { Role } from '../common/enum/rol.enum';
 import { Auth } from './decorators/auth.decorator';
-
-interface RequestWithUser extends Request {
-    user: {
-        email: string;
-        role: string;
-    };
-}
-
+import { ActiveUser } from 'src/common/decorators/active-user.decorators';
+import type { UserActiveInterface } from 'src/common/interfaces/user-active.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -41,7 +35,7 @@ export class AuthController {
         return this.authService.login(loginDto);
     }
 
-    @Get('profile')
+    // @Get('profile')
     // @Roles('admin','user')
     //@Roles(Role.ADMIN) // nota d henrry: esto es un decorador personalizado que se encarga de verificar el rol del usuario
     // @UseGuards(AuthGuard, RolesGuard)
@@ -51,13 +45,11 @@ export class AuthController {
     //         role: req.user.role
     //     });
     // }
+    
     @Get('profile')
-    @Auth(Role.ADMIN) 
-    profile(@Req() req: RequestWithUser) {
-        return this.authService.profile({
-            email: req.user.email,
-            role: req.user.role
-        });
+    @Auth(Role.ADMIN)
+    profile(@ActiveUser() user: UserActiveInterface) {
+        return this.authService.profile(user);
     }
 
 }

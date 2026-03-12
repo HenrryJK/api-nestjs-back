@@ -22,16 +22,17 @@ export class UsersService {
   findOneByEmail(email: string) {
     return this.userRepository.findOne({ where: { email }});
   }
+  
   // accion para buscar por email y traer la contraseñaaaas
   findByEmailWithPassword(email: string) {
     return this.userRepository.findOne({
-      where: { email }
+      where: { email },
+      select: ['id_user', 'name', 'email', 'password', 'role'],
     });
   }
   // listar todos los usuarios
   findAll() {
-    return `This action returns all users`;
-    // return this.userRepository.find();
+    return this.userRepository.find();
   }
   // listar un usuario por id
   findOne(id: number) {
